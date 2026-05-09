@@ -56,6 +56,17 @@
       matchUpdateTypes: ['major'],
       groupName: 'scripts major dependencies',
     },
+    // GitHub Actions
+    {
+      matchManagers: ['github-actions'],
+      matchUpdateTypes: ['minor', 'patch'],
+      groupName: 'github-actions non-major dependencies',
+    },
+    {
+      matchManagers: ['github-actions'],
+      matchUpdateTypes: ['major'],
+      groupName: 'github-actions major dependencies',
+    },
   ],
   "ignoreDeps": [
     "node",
