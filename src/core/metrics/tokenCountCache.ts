@@ -14,7 +14,11 @@ const CACHE_VERSION = 1;
 // cap is exceeded the oldest entries are dropped at save time.
 export const MAX_CACHE_ENTRIES = 100_000;
 
-const CACHE_DIR_NAME = 'repomix-cache';
+// Cache lives under $TMPDIR/repomix/cache/ to share the `repomix/` parent
+// directory with other ephemeral state (e.g. mcp-outputs/), so all repomix
+// temp artifacts on a host are siblings under one umbrella.
+const CACHE_DIR_NAME = 'repomix';
+const CACHE_SUBDIR_NAME = 'cache';
 const CACHE_FILE_NAME = 'token-counts.json';
 
 interface CacheData {
@@ -45,7 +49,7 @@ let state = createState();
 export const getCacheFilePath = (): string => {
   const override = process.env.REPOMIX_TOKEN_CACHE_PATH;
   if (override) return override;
-  return path.join(os.tmpdir(), CACHE_DIR_NAME, CACHE_FILE_NAME);
+  return path.join(os.tmpdir(), CACHE_DIR_NAME, CACHE_SUBDIR_NAME, CACHE_FILE_NAME);
 };
 
 /**
@@ -101,9 +105,10 @@ export const saveTokenCountCache = async (): Promise<void> => {
   const cacheDir = path.dirname(cacheFile);
 
   try {
-    // Restrict directory permissions so the cache (which contains digests of
-    // user file contents) is not world-readable on shared hosts.
-    await fs.mkdir(cacheDir, { recursive: true, mode: 0o700 });
+    // Match the directory-creation pattern used by MCP outputs
+    // (`$TMPDIR/repomix/mcp-outputs/`) so all repomix temp artifacts share
+    // a single `repomix/` parent. The file itself is mode 0600 below.
+    await fs.mkdir(cacheDir, { recursive: true });
 
     // FIFO eviction: Map iteration order is insertion order, so the oldest
     // entries appear first. When over the cap, drop the head of the list.
